@@ -1,28 +1,26 @@
 package com.dk.chat.api;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.messaging.handler.annotation.SendTo;
-import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.web.bind.annotation.RestController;
 
-import com.dk.model.Message;
+import com.dk.chat.model.MessageModel;
+import com.dk.chat.userstorage.UserStorage;
 
-@Controller
-@CrossOrigin
+@RestController
 public class ChatController {
-    @MessageMapping("/chat.register")
-    @SendTo("/topic/public")
-    public Message register(@Payload Message message,SimpMessageHeaderAccessor headerAccessor) {
-    	headerAccessor.getSessionAttributes().put("username", message.getName());
-		return message;
-    	
-    }
-    
-    @MessageMapping("/chat.send")
-    @SendTo("/topic/public")
-    public Message sendMessage(@Payload Message message) {
-    	return message;
+
+    @Autowired
+    private SimpMessagingTemplate simpMessagingTemplate;
+
+    @MessageMapping("/chat/{to}")
+    public void sendMessage(@DestinationVariable String to, MessageModel message) {
+        System.out.println("handling send message: " + message + " to: " + to);
+        boolean isExists = UserStorage.getInstance().getUsers().contains(to);
+        if (isExists) {
+            simpMessagingTemplate.convertAndSend("/topic/messages/" + to, message);
+        }
     }
 }
