@@ -1,4 +1,4 @@
-package com.dk.model;
+package com.dk.chat.model;
 
 public class Message {
 	private String content;
